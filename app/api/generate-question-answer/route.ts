@@ -1,4 +1,4 @@
-import { questionSchema, questionsSchema } from "@/lib/schemas";
+import { flashcardSchema, flashcardsSchema } from "@/lib/schemas";
 import { google } from "@ai-sdk/google";
 import { streamObject } from "ai";
 
@@ -14,14 +14,14 @@ export async function POST(req: Request) {
       {
         role: "system",
         content:
-          "You are a teacher. Your job is to take a document, and create a multiple choice test (with 8 questions) based on the content of the document. Each option should be roughly equal in length.",
+          "You are a teacher. Your job is to take a document and create a set of fill-in-the-blank (with 8 questions) flashcards based on its content. Each flashcard should have a sentence with a missing word (blank) as the question and the correct word/phrase as the answer.",
       },
       {
         role: "user",
         content: [
           {
             type: "text",
-            text: "Create a multiple choice test based on this document.",
+            text: "Create fill-in-the-blank flashcards from this document.",
           },
           {
             type: "file",
@@ -31,10 +31,12 @@ export async function POST(req: Request) {
         ],
       },
     ],
-    schema: questionSchema,
+    schema: flashcardSchema,
     output: "array",
     onFinish: ({ object }) => {
-      const res = questionsSchema.safeParse(object);
+      const res = flashcardsSchema.safeParse(object);
+
+      console.log(res.error, "hh");
       if (res.error) {
         throw new Error(res.error.errors.map((e) => e.message).join("\n"));
       }
@@ -43,3 +45,4 @@ export async function POST(req: Request) {
 
   return result.toTextStreamResponse();
 }
+
