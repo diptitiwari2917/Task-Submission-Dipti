@@ -128,7 +128,7 @@ export default function QuizComponent({ questions }: QuizProps) {
 
                 {/* "Don't Know" text centered */}
                 {!isSubmitted && (
-                  <p className="text-center text-gray-400 mt-4">Don't know?</p>
+                  <p className="text-center text-gray-400 mt-4">Don&#39;t know?</p>
                 )}
               </CardContent>
             </Card>
