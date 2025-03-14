@@ -195,6 +195,26 @@ export default function QuizComponent({ questions }: QuizProps) {
         </Button>
       )}
 
+      {/* Show Score, Time Taken & Print Results */}
+      {isSubmitted && (
+        <div className="flex flex-col items-center mt-6 space-y-4">
+          {/* Display Score */}
+          <QuizScore correctAnswers={score} totalQuestions={questions.length} />
+
+          {/* Time Taken */}
+          <p className="text-lg text-gray-300">
+            You completed the quiz in <span className="font-bold text-green-400">{timeTaken} sec</span>.
+          </p>
+
+          {/* Print Button */}
+          <div className="flex gap-4">
+            <Button onClick={handlePrint} variant="outline" className="flex items-center">
+              <Printer className="w-4 h-4 mr-2" /> Print Results
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Review Skipped Questions Dialog */}
       <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
         <DialogContent className="bg-gray-800 text-white p-6 rounded-lg">
