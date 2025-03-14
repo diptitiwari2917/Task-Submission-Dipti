@@ -22,18 +22,25 @@ type Card = {
 };
 
 export default function Match({ questions }: MatchGameProps) {
+  // State to track selected cards
   const [selectedCards, setSelectedCards] = useState<number[]>([]);
+  // State to track matched pairs
   const [matchedPairs, setMatchedPairs] = useState<number[]>([]);
+  // State to track incorrect selections
   const [incorrectPairs, setIncorrectPairs] = useState<number[]>([]);
+  // Timer state
   const [time, setTime] = useState(0);
+  // State to store shuffled cards
   const [cards, setCards] = useState<Card[]>([]);
+  // State to track if the game is completed
   const [isComplete, setIsComplete] = useState(false);
 
+  // Initialize the game when questions change
   useEffect(() => {
     startGame();
   }, [questions]);
 
-  // Start Timer
+  // Timer effect: increases time every second until game is completed
   useEffect(() => {
     if (isComplete) return; // Stop timer when complete
     const timer = setInterval(() => {
@@ -42,26 +49,39 @@ export default function Match({ questions }: MatchGameProps) {
     return () => clearInterval(timer);
   }, [isComplete]);
 
-  // Shuffle and create question-answer pairs
+  /**
+   * Initializes the game by shuffling question-answer pairs and resetting states.
+   */
   const startGame = () => {
     setTime(0);
     setIsComplete(false);
     setSelectedCards([]);
     setMatchedPairs([]);
     setIncorrectPairs([]);
+
+    // Generate shuffled card pairs from questions
     const generatedPairs: Card[] = questions.flatMap((q, index) => [
       { id: index * 2, text: q.question, pairId: index, hidden: false },
       { id: index * 2 + 1, text: q.answer, pairId: index, hidden: false },
     ]);
+
     setCards(shuffleArray(generatedPairs));
   };
 
-  // Shuffle Array
+  /**
+   * Shuffles the card array randomly.
+   * @param arr - Array of cards to shuffle.
+   * @returns - Shuffled array of cards.
+   */
   const shuffleArray = (arr: Card[]) => arr.sort(() => Math.random() - 0.5);
 
-  // Handle card selection
+  /**
+   * Handles card selection logic.
+   * @param id - ID of the selected card.
+   * @param pairId - Pair ID associated with the card.
+   */
   const handleSelect = (id: number, pairId: number) => {
-    if (selectedCards.includes(id)) return;
+    if (selectedCards.includes(id)) return; // Prevent selecting the same card twice
 
     const newSelected = [...selectedCards, id];
 
@@ -74,6 +94,7 @@ export default function Match({ questions }: MatchGameProps) {
         // Correct match
         setMatchedPairs((prev) => [...prev, firstCard.pairId]);
         setTimeout(() => {
+          // Hide matched pairs from the board
           setCards((prev) =>
             prev.map((card) =>
               card.pairId === firstCard.pairId ? { ...card, hidden: true } : card
@@ -92,7 +113,9 @@ export default function Match({ questions }: MatchGameProps) {
     }
   };
 
-  // Check if all pairs are matched
+  /**
+   * Checks if all pairs have been matched and ends the game.
+   */
   const checkCompletion = () => {
     setTimeout(() => {
       if (matchedPairs.length + 1 === questions.length) {
@@ -103,7 +126,7 @@ export default function Match({ questions }: MatchGameProps) {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-900 text-gray-300 p-6">
-      {/* Timer */}
+      {/* Timer Display */}
       <h2 className="text-xl font-semibold mb-6 text-gray-400">Time: {time} sec</h2>
 
       {/* Match Grid */}

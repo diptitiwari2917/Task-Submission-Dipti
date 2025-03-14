@@ -14,18 +14,28 @@ type FlashcardsProps = {
 };
 
 export default function FlashcardsPage({ questions }: FlashcardsProps) {
+  // State to track the current flashcard index
   const [currentIndex, setCurrentIndex] = useState(0);
+  // State to toggle between question and answer
   const [showAnswer, setShowAnswer] = useState(false);
+  // State to manage auto-play functionality
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  // State to store shuffled questions
   const [shuffledQuestions, setShuffledQuestions] = useState<Flashcard[]>([]);
 
+  /**
+   * Effect to shuffle questions when component mounts or when `questions` change.
+   */
   useEffect(() => {
     if (questions.length > 0) {
       setShuffledQuestions(shuffleArray([...questions]));
     }
   }, [questions]);
 
-  // Auto-play functionality (Moves to the next question)
+  /**
+   * Effect to handle auto-play functionality.
+   * Moves to the next question every 3 seconds.
+   */
   useEffect(() => {
     if (!isAutoPlaying) return;
     const timer = setInterval(() => {
@@ -34,7 +44,9 @@ export default function FlashcardsPage({ questions }: FlashcardsProps) {
     return () => clearInterval(timer);
   }, [isAutoPlaying, currentIndex]);
 
-  // Keyboard navigation (Arrow keys)
+  /**
+   * Effect to enable keyboard navigation for flashcards.
+   */
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "ArrowRight") handleNext();
@@ -44,11 +56,16 @@ export default function FlashcardsPage({ questions }: FlashcardsProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentIndex]);
 
-  // Toggle Question ↔ Answer
+  /**
+   * Toggles between the question and answer of the current flashcard.
+   */
   const handleCardClick = () => {
     setShowAnswer((prev) => !prev);
   };
 
+  /**
+   * Moves to the next flashcard and resets the answer visibility.
+   */
   const handleNext = () => {
     if (!shuffledQuestions.length) return;
     if (currentIndex < shuffledQuestions.length - 1) {
@@ -57,6 +74,9 @@ export default function FlashcardsPage({ questions }: FlashcardsProps) {
     }
   };
 
+  /**
+   * Moves to the previous flashcard and resets the answer visibility.
+   */
   const handlePrevious = () => {
     if (!shuffledQuestions.length) return;
     if (currentIndex > 0) {
@@ -65,12 +85,20 @@ export default function FlashcardsPage({ questions }: FlashcardsProps) {
     }
   };
 
+  /**
+   * Shuffles the flashcards and resets the index.
+   */
   const handleShuffle = () => {
     setShuffledQuestions(shuffleArray([...questions]));
     setCurrentIndex(0);
     setShowAnswer(false);
   };
 
+  /**
+   * Helper function to shuffle an array randomly.
+   * @param arr - The array to shuffle.
+   * @returns The shuffled array.
+   */
   const shuffleArray = (arr: Flashcard[]) => arr.sort(() => Math.random() - 0.5);
 
   return (

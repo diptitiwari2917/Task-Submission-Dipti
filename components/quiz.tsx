@@ -13,42 +13,82 @@ type QuizProps = {
 };
 
 export default function QuizComponent({ questions }: QuizProps) {
+  // State variables
   const [answers, setAnswers] = useState<{ [key: number]: string | null }>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [timeTaken, setTimeTaken] = useState(0);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
+
+  // References for scrolling and timing
   const containerRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<number | null>(null);
 
+  // Start the timer when the component mounts
   useEffect(() => {
     startTimeRef.current = Date.now();
   }, []);
 
+  /**
+   * Handles selecting an answer for a question.
+   * @param questionIndex - Index of the question.
+   * @param answer - Selected answer option.
+   */
   const handleSelectAnswer = (questionIndex: number, answer: string) => {
     if (!isSubmitted) {
       setAnswers((prev) => ({ ...prev, [questionIndex]: answer }));
     }
   };
 
+  /**
+   * Handles skipping a question and scrolling to the next unanswered one.
+   * @param questionIndex - Index of the skipped question.
+   */
+  const handleSkip = (questionIndex: number) => {
+    if (!isSubmitted) {
+      // Find the next unanswered question
+      const nextUnansweredIndex = questions.findIndex((_, index) => !answers[index] && index > questionIndex);
+      const nextQuestion = document.getElementById(`question-${nextUnansweredIndex}`);
+
+      // Scroll to the next question if available
+      if (nextQuestion) {
+        nextQuestion.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+  };
+
+  // Get the list of skipped questions
   const skippedQuestions = questions.filter((_, index) => !answers[index]);
 
+  /**
+   * Final submission handler. Calculates the score and stops the timer.
+   */
   const handleFinalSubmit = () => {
-    setShowReviewDialog(false); // Close modal first
+    setShowReviewDialog(false); // Close the review modal
+
     setTimeout(() => {
       setIsSubmitted(true);
+
+      // Calculate time taken
       if (startTimeRef.current) {
         const elapsedTime = Math.floor((Date.now() - startTimeRef.current) / 1000);
         setTimeTaken(elapsedTime);
       }
+
+      // Calculate score
       const correctCount = questions.reduce((acc, question, index) => {
         return acc + (answers[index] === question.answer ? 1 : 0);
       }, 0);
       setScore(correctCount);
+
+      // Scroll to top after submission
       window.scrollTo({ top: 0, behavior: "smooth" });
-    }, 300); // Small delay to ensure modal closes smoothly
+    }, 300);
   };
 
+  /**
+   * Handles submit button click. If there are skipped questions, show review modal.
+   */
   const handleSubmit = () => {
     if (skippedQuestions.length > 0) {
       setShowReviewDialog(true);
@@ -57,13 +97,20 @@ export default function QuizComponent({ questions }: QuizProps) {
     }
   };
 
+  /**
+   * Prints the quiz results.
+   */
   const handlePrint = () => {
     window.print();
   };
 
+  /**
+   * Scrolls to the first skipped question when "Review Skipped" is clicked.
+   */
   const handleReviewSkipped = () => {
     setShowReviewDialog(false);
     const firstSkippedIndex = questions.findIndex((_, index) => !answers[index]);
+
     if (firstSkippedIndex !== -1) {
       document.getElementById(`question-${firstSkippedIndex}`)?.scrollIntoView({ behavior: "smooth" });
     }
@@ -126,9 +173,14 @@ export default function QuizComponent({ questions }: QuizProps) {
                   })}
                 </div>
 
-                {/* "Don't Know" text centered */}
+                {/* "Don't Know" - Skip & Scroll */}
                 {!isSubmitted && (
-                  <p className="text-center text-gray-400 mt-4">Don&#39;t know?</p>
+                  <p
+                    className="text-center text-gray-400 mt-4 cursor-pointer hover:text-gray-200 transition"
+                    onClick={() => handleSkip(questionIndex)}
+                  >
+                    Don&#39;t know?
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -141,18 +193,6 @@ export default function QuizComponent({ questions }: QuizProps) {
         <Button onClick={handleSubmit} className="mt-6 bg-blue-600 hover:bg-blue-700">
           Submit Quiz
         </Button>
-      )}
-
-      {/* Show Score, Time Taken & Print Results */}
-      {isSubmitted && (
-        <div className="flex flex-col items-center mt-6 space-y-4">
-          <QuizScore correctAnswers={score} totalQuestions={questions.length} />
-          <div className="flex gap-4">
-            <Button onClick={handlePrint} variant="outline" className="flex items-center">
-              <Printer className="w-4 h-4 mr-2" /> Print Results
-            </Button>
-          </div>
-        </div>
       )}
 
       {/* Review Skipped Questions Dialog */}
