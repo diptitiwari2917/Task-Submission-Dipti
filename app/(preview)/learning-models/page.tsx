@@ -109,8 +109,8 @@ export default function LearningModes() {
 
       {/* Loader with Progress Bar */}
       {isLoading ? (
-        <>
-          <div className="w-full space-y-1">
+        <div className="w-60 space-y-1">
+          <div>
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>Progress</span>
               <span>{Math.round(progress)}%</span>
@@ -131,7 +131,7 @@ export default function LearningModes() {
               </span>
             </div>
           </div>
-        </>
+        </div>
       ) : (
         <motion.div
           key={mode}

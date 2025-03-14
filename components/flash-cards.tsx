@@ -25,11 +25,11 @@ export default function FlashcardsPage({ questions }: FlashcardsProps) {
     }
   }, [questions]);
 
-  // Auto-play functionality (Moves to the next question without revealing answer)
+  // Auto-play functionality (Moves to the next question)
   useEffect(() => {
     if (!isAutoPlaying) return;
     const timer = setInterval(() => {
-      handleNext(); // Auto-play should NOT reveal the answer
+      handleNext();
     }, 3000);
     return () => clearInterval(timer);
   }, [isAutoPlaying, currentIndex]);
@@ -37,28 +37,26 @@ export default function FlashcardsPage({ questions }: FlashcardsProps) {
   // Keyboard navigation (Arrow keys)
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "ArrowRight") handleNext(); // Don't reveal the answer
+      if (event.key === "ArrowRight") handleNext();
       if (event.key === "ArrowLeft") handlePrevious();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentIndex]);
 
-  // Click the flashcard → Reveal the answer
+  // Toggle Question ↔ Answer
   const handleCardClick = () => {
-    setShowAnswer(true);
+    setShowAnswer((prev) => !prev);
   };
 
-  // Move to the next question (Auto-play and navigation should NOT reveal the answer)
   const handleNext = () => {
     if (!shuffledQuestions.length) return;
     if (currentIndex < shuffledQuestions.length - 1) {
       setCurrentIndex((prev) => prev + 1);
-      setShowAnswer(false); // Reset answer visibility only when moving to a new question
+      setShowAnswer(false);
     }
   };
 
-  // Move to the previous question
   const handlePrevious = () => {
     if (!shuffledQuestions.length) return;
     if (currentIndex > 0) {
@@ -67,7 +65,6 @@ export default function FlashcardsPage({ questions }: FlashcardsProps) {
     }
   };
 
-  // Shuffle questions and reset to first question
   const handleShuffle = () => {
     setShuffledQuestions(shuffleArray([...questions]));
     setCurrentIndex(0);
@@ -91,22 +88,39 @@ export default function FlashcardsPage({ questions }: FlashcardsProps) {
         </button>
       </div>
 
-      {/* Flashcard */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentIndex}
-          className="relative bg-white w-[80%] max-w-4xl h-96 shadow-lg flex justify-center items-center text-3xl font-bold cursor-pointer rounded-2xl p-12 text-center text-black"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ duration: 0.3 }}
-          onClick={handleCardClick} // Clicking reveals the answer only
-        >
-          {showAnswer ? shuffledQuestions[currentIndex]?.answer : shuffledQuestions[currentIndex]?.question}
-        </motion.div>
-      </AnimatePresence>
+      {/* Flashcard with Slide Animation */}
+      <div
+        className="relative bg-white w-[80%] max-w-4xl h-96 shadow-lg flex justify-center items-center text-3xl font-bold cursor-pointer rounded-2xl p-12 text-center text-black overflow-hidden"
+        onClick={handleCardClick}
+      >
+        <AnimatePresence mode="wait">
+          {showAnswer ? (
+            <motion.div
+              key={`answer-${currentIndex}`}
+              className="absolute inset-0 flex items-center justify-center"
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: "0%", opacity: 1 }}
+              exit={{ x: "-100%", opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {shuffledQuestions[currentIndex]?.answer}
+            </motion.div>
+          ) : (
+            <motion.div
+              key={`question-${currentIndex}`}
+              className="absolute inset-0 flex items-center justify-center"
+              initial={{ x: "-100%", opacity: 0 }}
+              animate={{ x: "0%", opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {shuffledQuestions[currentIndex]?.question}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-      {/* Navigation Buttons (Just below the card) */}
+      {/* Navigation Buttons */}
       <div className="flex items-center justify-center space-x-12 mt-4">
         <button
           onClick={handlePrevious}

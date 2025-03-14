@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 type MatchPair = {
   question: string;
@@ -25,23 +27,34 @@ export default function Match({ questions }: MatchGameProps) {
   const [incorrectPairs, setIncorrectPairs] = useState<number[]>([]);
   const [time, setTime] = useState(0);
   const [cards, setCards] = useState<Card[]>([]);
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    startGame();
+  }, [questions]);
+
+  // Start Timer
+  useEffect(() => {
+    if (isComplete) return; // Stop timer when complete
+    const timer = setInterval(() => {
+      setTime((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isComplete]);
 
   // Shuffle and create question-answer pairs
-  useEffect(() => {
+  const startGame = () => {
+    setTime(0);
+    setIsComplete(false);
+    setSelectedCards([]);
+    setMatchedPairs([]);
+    setIncorrectPairs([]);
     const generatedPairs: Card[] = questions.flatMap((q, index) => [
       { id: index * 2, text: q.question, pairId: index, hidden: false },
       { id: index * 2 + 1, text: q.answer, pairId: index, hidden: false },
     ]);
     setCards(shuffleArray(generatedPairs));
-  }, [questions]);
-
-  // Timer Effect
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+  };
 
   // Shuffle Array
   const shuffleArray = (arr: Card[]) => arr.sort(() => Math.random() - 0.5);
@@ -66,6 +79,7 @@ export default function Match({ questions }: MatchGameProps) {
               card.pairId === firstCard.pairId ? { ...card, hidden: true } : card
             )
           );
+          checkCompletion();
         }, 2000);
       } else {
         // Incorrect match
@@ -76,6 +90,15 @@ export default function Match({ questions }: MatchGameProps) {
     } else {
       setSelectedCards(newSelected);
     }
+  };
+
+  // Check if all pairs are matched
+  const checkCompletion = () => {
+    setTimeout(() => {
+      if (matchedPairs.length + 1 === questions.length) {
+        setIsComplete(true);
+      }
+    }, 500);
   };
 
   return (
@@ -94,7 +117,7 @@ export default function Match({ questions }: MatchGameProps) {
             <motion.div
               key={id}
               onClick={() => !isMatched && !hidden && handleSelect(id, pairId)}
-              className={`p-1 w-65 h-50 flex justify-center items-center text-lg font-semibold text-center
+              className={`p-1 w-65 h-40 flex justify-center items-center text-lg font-semibold text-center
                 border-2 cursor-pointer rounded-lg transition-all duration-300
                 ${hidden ? "invisible" : ""}
                 ${isMatched ? "bg-green-600 text-white" : "bg-gray-800"}
@@ -109,6 +132,25 @@ export default function Match({ questions }: MatchGameProps) {
           );
         })}
       </div>
+
+      {/* Completion Modal */}
+      <Dialog open={isComplete} onOpenChange={setIsComplete}>
+        <DialogContent className="bg-gray-800 text-white p-6 rounded-lg">
+          <DialogHeader className="flex flex-col items-center text-center">
+            <DialogTitle className="text-lg font-semibold mt-4">
+              🎉 Congratulations!
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-center text-gray-300">
+            You completed the game in <span className="font-bold text-green-400">{time} sec</span>!
+          </div>
+          <div className="flex justify-center mt-4">
+            <Button onClick={startGame} className="bg-blue-600 hover:bg-blue-700">
+              Play Again
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
